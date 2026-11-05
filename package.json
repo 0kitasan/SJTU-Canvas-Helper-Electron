@@ -1,0 +1,69 @@
+{
+  "name": "canvas-helper-electron",
+  "version": "0.1.0",
+  "private": true,
+  "description": "SJTU Canvas Helper Electron desktop rebuild",
+  "author": "SJTU Canvas Helper contributors",
+  "type": "module",
+  "main": "dist-electron/electron/main.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.electron.json && vite build",
+    "start": "electron .",
+    "dev": "vite --host 127.0.0.1",
+    "test": "node --import tsx --test tests/*.test.ts",
+    "test:electron": "node tests/run-electron-smoke.cjs",
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.electron.json --noEmit",
+    "package": "tsc -p tsconfig.electron.json && vite build && electron-builder --win portable"
+  },
+  "dependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^4.3.0",
+    "electron": "45.1.0",
+    "electron-builder": "^26.0.0",
+    "prettier": "^3.9.10",
+    "tsx": "^4.19.0",
+    "typescript": "^5.9.0",
+    "vite": "^6.1.0"
+  },
+  "build": {
+    "appId": "local.canvas.helper.electron",
+    "productName": "SJTU_Canvas_Helper-electron",
+    "artifactName": "${productName}-${version}-win-${arch}-portable.${ext}",
+    "electronDist": "node_modules/electron/dist",
+    "win": {
+      "target": [
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "signAndEditExecutable": false
+    },
+    "files": [
+      "dist/**",
+      "dist-electron/**",
+      "electron/preload.cjs",
+      "electron/stdio.cjs",
+      "src/icons-LICENSE.txt",
+      "LICENSE",
+      "THIRD-PARTY-NOTICES.md"
+    ],
+    "directories": {
+      "output": "release"
+    }
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/0kitasan/SJTU-Canvas-Helper-Electron.git"
+  },
+  "homepage": "https://github.com/0kitasan/SJTU-Canvas-Helper-Electron#readme"
+}

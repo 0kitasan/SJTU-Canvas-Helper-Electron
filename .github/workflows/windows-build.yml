@@ -1,0 +1,64 @@
+name: Windows build
+
+on:
+  push:
+    branches: [main, master, 'ci/**']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: windows-build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.11.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+      - name: Install locked dependencies
+        run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: Install Electron runtime explicitly
+        run: node node_modules/electron/install.js
+      - name: Check public source files
+        run: node scripts/audit-public.cjs
+      - name: Typecheck and test
+        run: ./run.ps1 check
+      - name: Build
+        run: ./run.ps1 build
+      - name: Electron fixture smoke test
+        run: node tests/run-electron-smoke.cjs
+      - name: Package Windows x64 portable (no publish)
+        run: node node_modules/electron-builder/cli.js --win portable --x64 --publish never
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+      - name: Checksums
+        shell: pwsh
+        run: |
+          Get-ChildItem release/*-portable.exe | ForEach-Object {
+            $hash = Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256
+            "$($hash.Hash.ToLower())  $($_.Name)"
+          } | Set-Content release/SHA256SUMS.txt -Encoding utf8
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-x64-portable-${{ github.sha }}
+          path: |
+            release/*-portable.exe
+            release/SHA256SUMS.txt
+            LICENSE
+            THIRD-PARTY-NOTICES.md
+            DISTRIBUTION.md
+          if-no-files-found: error
+          retention-days: 14
