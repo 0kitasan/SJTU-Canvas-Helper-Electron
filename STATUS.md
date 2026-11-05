@@ -139,3 +139,8 @@ DISTRIBUTION.md提供异机使用及源码构建说明。发布源码使用git�
 https://github.com/0kitasan/SJTU-Canvas-Helper-Electron/actions/runs/41984385959
 
 已通过锁文件安装、Electron安装、公开源文件检查、48测试和两套类型检查、构建、Electron fixture烟测、Windows x64 portable打包、SHA256生成、Artifacts上传。产物windows-x64-portable-9e804a2139ebecb10fd82699b3c2e172aad42803，110763085字节，保留14天。未创建Release、未配置自动更新/签名、不使用学校账号或外部Secrets，仅contents:read。工作流支持push、PR和手动运行。
+
+
+## 构建产物保留期调整
+
+按用户要求删除README中的指定说明句，将Actions产物保留期由14天改为90天，并同步README/PUBLICATION。新保留期适用于此后构建上传的产物，既有产物仍保留创建时的到期设置。

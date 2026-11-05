@@ -35,7 +35,7 @@ smoke and Windows x64 portable packaging. CI never logs into school services.
 
 Open the successful run in the repository's Actions tab and download its
 `windows-x64-portable-...` artifact. Artifacts include the executable, SHA256 and
-license/use notices and expire after 14 days. No Release, tag publishing,
+license/use notices and expire after 90 days. No Release, tag publishing,
 automatic updater, signing certificate or write-scoped repository permission is
 configured. An Actions artifact is a build output, not a verified signed release.
 

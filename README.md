@@ -2,7 +2,7 @@
 
 [![Windows build](https://github.com/0kitasan/SJTU-Canvas-Helper-Electron/actions/workflows/windows-build.yml/badge.svg)](https://github.com/0kitasan/SJTU-Canvas-Helper-Electron/actions/workflows/windows-build.yml)
 
-基于 Electron、TypeScript、React 的独立重构，参考并改编自 [SJTU Canvas Helper](https://github.com/Okabe-Rintarou-0/SJTU-Canvas-Helper)（Zihong Lin 及贡献者）。不是上游官方 Electron 发行版，也不是学校官方应用。
+基于 Electron、TypeScript、React 的独立重构，参考并改编自 [SJTU Canvas Helper](https://github.com/Okabe-Rintarou-0/SJTU-Canvas-Helper)（Zihong Lin 及贡献者）。
 
 ## 当前能力
 
@@ -30,7 +30,7 @@ node node_modules/electron/install.js
 
 ## Actions 构建
 
-[Windows build](https://github.com/0kitasan/SJTU-Canvas-Helper-Electron/actions/workflows/windows-build.yml) 在推送、PR或手动触发后执行检查、测试和 Windows x64 便携版构建。成功后从该次运行的 Artifacts 下载程序，保留14天。当前不配置 Release、自动更新或签名。GitHub首次构建结果以 Actions 页面为准。
+[Windows build](https://github.com/0kitasan/SJTU-Canvas-Helper-Electron/actions/workflows/windows-build.yml) 在推送、PR或手动触发后执行检查、测试和 Windows x64 便携版构建。成功后从该次运行的 Artifacts 下载程序，保留90天。当前不配置 Release、自动更新或签名。GitHub首次构建结果以 Actions 页面为准。
 
 ## 账号和数据
 
