@@ -38,3 +38,13 @@ Open the successful run in the repository's Actions tab and download its
 license/use notices and expire after 14 days. No Release, tag publishing,
 automatic updater, signing certificate or write-scoped repository permission is
 configured. An Actions artifact is a build output, not a verified signed release.
+
+## First hosted verification
+
+The Windows GitHub-hosted build passed all steps, including 48 tests,
+TypeScript, the Electron fixture smoke, portable packaging, checksums and
+artifact upload:
+https://github.com/0kitasan/SJTU-Canvas-Helper-Electron/actions/runs/41984385959
+
+The remote repository initially contained no refs. Only the reviewed main
+branch was pushed; local development branches and history bundles were not.

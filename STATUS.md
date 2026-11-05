@@ -128,3 +128,14 @@ DISTRIBUTION.md提供异机使用及源码构建说明。发布源码使用git�
 只读检查用户指定的既有下载目录，看到课程下按YYYY-MM-DD分组，同一天多个开课时间视频同放一个日期文件夹。现调整新下载路径为“所选目录/课程名_课程ID/YYYY-MM-DD/HH_mm_ss_录像ID_机位N.mp4”，取消每课节独立子目录；时间与录像ID避免同日/同刻课节互相覆盖。日期由结构化startTime读取，带时区时间统一为Asia/Shanghai；无有效日期放“日期未知”并保留标题/ID，不猜测日期。现有文件未移动、未修改。
 
 48项测试、两套类型检查、Vite构建和Electron烟测通过；新增同日共享目录、跨日分离、同刻不同ID不碰撞、上海跨日/时区、非法与未知日期保护。本轮更新源码及dist，之前release内已交付的0.1.0便携包和源码zip未重新生成，不包含本次修改。
+
+## 2026-11-05 公开仓库初始化与 Actions 验证
+
+上游官方LICENSE核对为MIT、Copyright(c)2025 Zihong Lin，已原样保留。README说明独立重构及上游链接，THIRD-PARTY-NOTICES记录改编及Material UI图标来源；package元数据与打包白名单包含许可证。
+
+公开前本地检查发现旧开发历史包含个人绝对路径，保留本地master和ignored历史备份，不推送旧分支；公开main从9e804a2独立根提交开始。文档替换为相对路径，上游配置/运行日志/加密账号/媒体/依赖/构建缓存均不上传。scripts/audit-public.cjs在本地和CI扫描tracked allowlist通过（已识别路径和凭据模式，非所有秘密格式的绝对保证）。PUBLICATION.md说明发布边界，禁止push --all或上传旧bundle。
+
+首次Windows Actions实际成功：
+https://github.com/0kitasan/SJTU-Canvas-Helper-Electron/actions/runs/41984385959
+
+已通过锁文件安装、Electron安装、公开源文件检查、48测试和两套类型检查、构建、Electron fixture烟测、Windows x64 portable打包、SHA256生成、Artifacts上传。产物windows-x64-portable-9e804a2139ebecb10fd82699b3c2e172aad42803，110763085字节，保留14天。未创建Release、未配置自动更新/签名、不使用学校账号或外部Secrets，仅contents:read。工作流支持push、PR和手动运行。
