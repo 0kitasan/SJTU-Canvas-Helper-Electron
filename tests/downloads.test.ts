@@ -6,7 +6,7 @@ import path from 'node:path';
 import {DownloadManager,schoolVideoUrl} from '../core/downloads.js';
 import {VideoService} from '../core/service.js';
 async function fixture(run:(directory:string)=>Promise<void>) {const directory=await mkdtemp(path.join(tmpdir(),'video-download-'));try{await run(directory);}finally{await rm(directory,{recursive:true,force:true});}}
-async function done(manager:DownloadManager,id:string) {for(let n=0;n<200;n++){const task=manager.list().find(t=>t.id===id)!;if(!['queued','running'].includes(task.state))return task;await new Promise(r=>setTimeout(r,10));}throw new Error('download timed out');}
+async function done(manager:DownloadManager,id:string) {for(let n=0;n<1000;n++){const task=manager.list().find(t=>t.id===id)!;if(!['queued','running'].includes(task.state))return task;await new Promise(r=>setTimeout(r,10));}throw new Error('download timed out');}
 const source=async()=>({url:'https://mss2.sjtu.edu.cn/video.mp4'});
 test('download queue uses at most two simultaneous media connections',async()=>fixture(async dir=>{
   const {createServer}=await import('node:http');

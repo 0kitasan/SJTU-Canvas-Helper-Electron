@@ -14,6 +14,9 @@ export interface DownloadTask {
   state: DownloadState;
   received: number;
   bytesPerSecond?: number;
+  retryCount?: number;
+  stage?: string;
+  partialRetained?: boolean;
   total?: number;
   error?: string;
 }
