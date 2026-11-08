@@ -18,9 +18,11 @@ interface Entry { task: DownloadTask; input: DownloadInput; controller?: AbortCo
 export class DownloadManager {
   private entries: Entry[] = [];
   private listeners = new Set<() => void>();
-  private running = false;
+  private running = 0;
   private closing = false;
-  constructor(private fetcher: typeof fetch = fetch, private validateUrl = schoolVideoUrl) {}
+  constructor(private fetcher: typeof fetch = fetch, private validateUrl = schoolVideoUrl, private concurrency = 2) {
+    if (!Number.isInteger(concurrency) || concurrency < 1 || concurrency > 2) throw new Error('下载并发数必须为1或2');
+  }
   list(): DownloadTask[] { return this.entries.map(({task}) => ({...task})); }
   onChange(listener: () => void): () => void { this.listeners.add(listener); return () => {this.listeners.delete(listener);}; }
   private emit() { for (const listener of this.listeners) { try {listener();} catch { /* Subscriber cannot stop downloads. */ } } }
@@ -41,7 +43,7 @@ export class DownloadManager {
     const entry=this.find(id);
     if (!['failed','cancelled'].includes(entry.task.state)) throw new Error('仅失败或取消的任务可重试');
     if (this.entries.some(other=>other!==entry && other.input.key===entry.input.key && ['queued','running'].includes(other.task.state))) throw new Error('同一录像已有下载任务');
-    entry.task.state='queued';entry.task.received=0;delete entry.task.total;delete entry.task.error;
+    entry.task.state='queued';entry.task.received=0;delete entry.task.total;delete entry.task.error;delete entry.task.bytesPerSecond;
     this.emit();void this.pump();
   }
   private find(id: string) { const entry=this.entries.find(e=>e.task.id===id);if(!entry)throw new Error('下载任务不存在');return entry; }
@@ -50,13 +52,14 @@ export class DownloadManager {
     for(const entry of this.entries) this.cancel(entry.task.id);
     while(this.running) await new Promise(resolve=>setTimeout(resolve,10));
   }
-  private async pump() {
-    if(this.running)return;
-    this.running=true;
-    try {
-      let entry:Entry|undefined;
-      while((entry=this.entries.find(e=>e.task.state==='queued'))) await this.download(entry);
-    } finally {this.running=false;}
+  private pump() {
+    if(this.closing)return;
+    while(this.running<this.concurrency) {
+      const entry=this.entries.find(e=>e.task.state==='queued');
+      if(!entry)break;
+      this.running++;
+      void this.download(entry).finally(()=>{this.running--;this.pump();});
+    }
   }
   private async download(entry:Entry) {
     const {task,input}=entry;
@@ -96,6 +99,7 @@ export class DownloadManager {
       file=await open(part,'wx');
       const reader=response.body.getReader();
       let lastNotice=0;
+      let speedStart=Date.now(),speedBytes=0;
       while(true) {
         armTimeout();
         const {done,value}=await reader.read();
@@ -105,6 +109,11 @@ export class DownloadManager {
         let offset=0;
         while(offset<value.length) {const result=await file.write(value,offset,value.length-offset);if(!result.bytesWritten)throw new Error('写入视频失败');offset+=result.bytesWritten;}
         task.received+=value.length;
+        const now=Date.now();
+        if(now-speedStart>=500){
+          task.bytesPerSecond=(task.received-speedBytes)*1000/(now-speedStart);
+          speedStart=now;speedBytes=task.received;
+        }
         if(Date.now()-lastNotice>=200){this.emit();lastNotice=Date.now();}
       }
       if(controller.signal.aborted)throw controller.signal.reason;
@@ -119,7 +128,7 @@ export class DownloadManager {
       task.state=controller.signal.aborted && !controller.signal.reason?.message?.includes('超时')?'cancelled':'failed';
       task.error=task.state==='cancelled'?undefined:(error as NodeJS.ErrnoException)?.code==='EEXIST'?'目标文件已存在，请选择其他文件名':error instanceof Error && /^(?:视频|服务器|录像|下载)/.test(error.message)?error.message:'视频下载失败，请检查网络、权限和保存目录';
     } finally {
-      clearTimeout(idleTimer);await file?.close().catch(()=>{});await unlink(part).catch(()=>{});delete entry.controller;this.emit();
+      clearTimeout(idleTimer);await file?.close().catch(()=>{});await unlink(part).catch(()=>{});delete entry.controller;task.bytesPerSecond=0;this.emit();
     }
   }
 }

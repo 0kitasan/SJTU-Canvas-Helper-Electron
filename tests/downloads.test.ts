@@ -8,6 +8,24 @@ import {VideoService} from '../core/service.js';
 async function fixture(run:(directory:string)=>Promise<void>) {const directory=await mkdtemp(path.join(tmpdir(),'video-download-'));try{await run(directory);}finally{await rm(directory,{recursive:true,force:true});}}
 async function done(manager:DownloadManager,id:string) {for(let n=0;n<200;n++){const task=manager.list().find(t=>t.id===id)!;if(!['queued','running'].includes(task.state))return task;await new Promise(r=>setTimeout(r,10));}throw new Error('download timed out');}
 const source=async()=>({url:'https://mss2.sjtu.edu.cn/video.mp4'});
+test('download queue uses at most two simultaneous media connections',async()=>fixture(async dir=>{
+  const {createServer}=await import('node:http');
+  let active=0,maximum=0;
+  const server=createServer((_request,response)=>{
+    active++;maximum=Math.max(maximum,active);
+    response.on('close',()=>active--);
+    response.writeHead(200,{'Content-Type':'video/mp4'});response.write('1234');
+    setTimeout(()=>response.end('5678'),80);
+  });
+  await new Promise<void>(resolve=>server.listen(0,'127.0.0.1',resolve));
+  const address=server.address();if(!address||typeof address==='string')throw new Error('no server');
+  const manager=new DownloadManager(fetch,()=>{});
+  try {
+    const tasks=[0,1,2,3].map(index=>manager.enqueue({key:String(index),title:'fixture',filePath:path.join(dir,`${index}.mp4`),resolve:async()=>({url:`http://127.0.0.1:${address.port}/video`})}));
+    for(const task of tasks)assert.equal((await done(manager,task.id)).state,'completed');
+    assert.equal(maximum,2);assert.equal(manager.list().every(task=>task.bytesPerSecond===0),true);
+  } finally {await manager.shutdown();server.closeAllConnections();await new Promise<void>(resolve=>server.close(()=>resolve()));}
+}));
 test('video download streams unknown size, deduplicates and publishes without part files',async()=>fixture(async dir=>{
   let calls=0;const manager=new DownloadManager(async()=>{calls++;return new Response(new Uint8Array([0,0,0,24,102,116,121,112]));});
   const input={key:'recording:1:0',title:'test',filePath:path.join(dir,'video.mp4'),resolve:source};

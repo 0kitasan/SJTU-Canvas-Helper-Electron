@@ -767,6 +767,7 @@ function App() {
                     {tasks.map(task => <tr key={task.id}><td>{task.title}<small>{task.state}{task.error ? ` · ${task.error}` : ""}</small></td><td>
                       {task.total ? <progress value={task.received} max={task.total}/> : task.state === "running" ? <progress/> : null}
                       <small>{(task.received / 1048576).toFixed(1)} MB{task.total ? ` / ${(task.total / 1048576).toFixed(1)} MB` : ""}</small>
+                      {task.state === "running" && <small>{task.bytesPerSecond ? `${(task.bytesPerSecond/1048576).toFixed(2)} MiB/s · ${(task.bytesPerSecond*8/1000000).toFixed(2)} Mbps` : "正在连接或测速…"}</small>}
                       {["running","queued"].includes(task.state) && <button onClick={()=>void run(()=>window.canvas.cancelDownload(task.id))}>取消</button>}
                       {["failed","cancelled"].includes(task.state) && <button onClick={()=>void run(()=>window.canvas.retryDownload(task.id))}>重试</button>}
                     </td><td className="path">{task.filePath}</td></tr>)}

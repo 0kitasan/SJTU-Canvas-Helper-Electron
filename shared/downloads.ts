@@ -13,6 +13,7 @@ export interface DownloadTask {
   filePath: string;
   state: DownloadState;
   received: number;
+  bytesPerSecond?: number;
   total?: number;
   error?: string;
 }
