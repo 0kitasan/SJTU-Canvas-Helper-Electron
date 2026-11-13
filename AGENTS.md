@@ -4,7 +4,7 @@
 
 - 本方案工作目录：本仓库根目录
 - 原版源码（只读）：https://github.com/Okabe-Rintarou-0/SJTU-Canvas-Helper
-- 功能范围（必须全文阅读）：FEATURE-PARITY.md
+- 功能范围（必须全文阅读）：docs/FEATURE-PARITY.md
 - 原版界面参考：https://github.com/Okabe-Rintarou-0/SJTU-Canvas-Helper/tree/main/images
 - 本目录 PROMPT.md 是用户新对话的启动提示词，STATUS.md 是当前状态。
 
@@ -12,7 +12,7 @@
 
 继续使用 TypeScript 严格类型、React、Electron；保留原版可复用组件和布局。优先统一一种 UI 组件体系，不盲目同时带入 MUI/AntD/LobeHub。业务服务独立于 Electron，preload 暴露小而明确的类型化 API。主进程/后台拥有会话与任务，renderer 关闭 Node 并启用隔离。远程登录窗口不得继承应用 preload。现有 pnpm 锁文件保留，首先核对 pnpm 配置并执行类型检查、测试和构建。node_modules 与缓存搬迁后需检查；不得因启动成功就宣称正式安装包验证完成。
 
-只修改本仓库；上游项目仅作只读参考，不覆盖上游或既有账号配置。开始先阅读本说明、FEATURE-PARITY.md和旧版源码，审查现有原型，再建立功能清单并立即开始实现原版外壳和真实登录流程。不要将当前原型界面视为用户认可设计。
+只修改本仓库；上游项目仅作只读参考，不覆盖上游或既有账号配置。开始先阅读本说明、docs/FEATURE-PARITY.md和旧版源码，审查现有原型，再建立功能清单并立即开始实现原版外壳和真实登录流程。不要将当前原型界面视为用户认可设计。
 
 用户已经授权完整重构及按需要使用子代理。实现、修复、构建和正常验证自主推进；需求有歧义先查旧版行为，有阻塞才问用户。不要把任务缩减成 demo，也不要一次铺满空页面假装完整。
 
@@ -26,7 +26,7 @@
 
 ## 当前运行与验证约定
 
-- 使用 `./run.ps1 start/build/check/smoke`；无需全局 pnpm。脚本直接使用现有 Node 与依赖，不改全局 PATH。用户使用说明在 RUN-AND-TEST.md。
+- 使用 `./run.ps1 start/build/check/smoke`；无需全局 pnpm。脚本直接使用现有 Node 与依赖，不改全局 PATH。用户使用说明在 docs/RUN-AND-TEST.md。
 - 普通启动必须显示窗口，不得用 Hidden 隐藏用户请求的主界面；后台工具与日志辅助进程保持隐藏。主进程持有窗口引用，ready-to-show 显示；重复启动聚焦已有实例。
 - 烟测使用独立 .smoke-profile，不能与真实用户会话争用缓存或读写账号。烟测通过不能代替普通启动验收；普通入口须核对窗口可见和主进程存活。
 - Canvas 个人 Token 与录像 JWT 分离。Token 验证成功才切换会话，使用系统 safeStorage 加密保存，明文不日志/落盘；平台选择与有效Cookie重启恢复，退出清除。学校 Cookie 登录独立保留；不得读取原版密钥测试。

@@ -11,7 +11,7 @@
 - 视频多选/全选、整批一次目录确认、默认全部机位、共享后台队列、取消/重试；按课程和上海日期分目录。
 - 深浅主题、折叠导航、缩放、多窗口、短TTL缓存及并发请求合并。
 
-这是持续迁移中的项目，不是全部功能完成版。HLS分段合并及部分原版业务尚未迁移；Agent/MCP已移除，云盘暂缓。详细范围见 [FEATURE-PARITY.md](FEATURE-PARITY.md)，验证证据与边界见 [TEST-REPORT.md](TEST-REPORT.md)。
+这是持续迁移中的项目，不是全部功能完成版。HLS分段合并及部分原版业务尚未迁移；Agent/MCP已移除，云盘暂缓。详细范围见 [docs/FEATURE-PARITY.md](docs/FEATURE-PARITY.md)，验证证据与边界见 [docs/TEST-REPORT.md](docs/TEST-REPORT.md)。
 
 ## 开发运行
 
@@ -26,7 +26,7 @@ node node_modules/electron/install.js
 .\run.ps1 start
 ```
 
-`run.ps1` 使用已安装的项目依赖；`start` 自动构建再启动。执行策略阻止时可使用 `powershell -NoProfile -ExecutionPolicy Bypass -File .\run.ps1 start`。网页 `dev` 只供界面调试，没有 Electron 桥接。完整步骤见 [RUN-AND-TEST.md](RUN-AND-TEST.md)。
+`run.ps1` 使用已安装的项目依赖；`start` 自动构建再启动。执行策略阻止时可使用 `powershell -NoProfile -ExecutionPolicy Bypass -File .\run.ps1 start`。网页 `dev` 只供界面调试，没有 Electron 桥接。完整步骤见 [docs/RUN-AND-TEST.md](docs/RUN-AND-TEST.md)。学校媒体连接可用 `.\run.ps1 stability` 独立诊断（需已有录像登录）。
 
 ## Actions 构建
 
@@ -40,4 +40,4 @@ node node_modules/electron/install.js
 
 [MIT License](LICENSE)，保留上游 `Copyright (c) 2025 Zihong Lin`。本重构的适配修改沿用MIT。Material UI Rounded图标保留在 [图标许可](src/icons-LICENSE.txt)；更多说明见 [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md)。
 
-发布边界、历史清理与CI说明见 [PUBLICATION.md](PUBLICATION.md)。项目交接入口是 [AGENTS.md](AGENTS.md)、[STATUS.md](STATUS.md) 和 [PROMPT.md](PROMPT.md)。
+发布边界、历史清理与CI说明见 [docs/PUBLICATION.md](docs/PUBLICATION.md)。项目交接入口是 [AGENTS.md](AGENTS.md)、[STATUS.md](STATUS.md) 和 [PROMPT.md](PROMPT.md)。

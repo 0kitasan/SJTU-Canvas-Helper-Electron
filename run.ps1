@@ -1,5 +1,5 @@
 param(
-    [ValidateSet('start', 'build', 'check', 'smoke', 'sessions')]
+    [ValidateSet('start', 'build', 'check', 'smoke', 'sessions', 'stability')]
     [string]$Action = 'start'
 )
 
@@ -58,6 +58,11 @@ try {
             Build-App
             $null = Require-File 'node_modules\electron\dist\electron.exe'
             Invoke-Node @('tests/run-electron-smoke.cjs')
+        }
+        'stability' {
+            Build-App
+            $null = Require-File 'node_modules\electron\dist\electron.exe'
+            Invoke-Node @('tests/run-download-stability.cjs')
         }
         'sessions' {
             Build-App

@@ -158,6 +158,27 @@ app.whenReady().then(async () => {
       await wait(()=>document.querySelector('.preview .badge')?.textContent==='优化字幕');
       return true;
     })()`);
+    // Exercise the renderer's actual task subscription with deterministic rate/ETA data.
+    const etaFixture={id:'eta-fixture',key:'eta-fixture',title:'ETA显示验证',filePath:'fixture.mp4',state:'running',received:1048576,total:10485760,bytesPerSecond:1048576,etaSeconds:9};
+    win.webContents.send('downloads:changed',[etaFixture]);
+    await win.webContents.executeJavaScript(`(async()=>{
+      for(let i=0;i<50;i++){
+        const text=document.querySelector('#download-results')?.textContent||'';
+        if(text.includes('平均 1.00 MiB/s · 8.39 Mbps')&&text.includes('预计剩余 9 秒'))return;
+        await new Promise(r=>setTimeout(r,20));
+      }
+      throw new Error('Rate / ETA not rendered');
+    })()`);
+    win.webContents.send('downloads:changed',[{...etaFixture,bytesPerSecond:0,etaSeconds:undefined}]);
+    await win.webContents.executeJavaScript(`(async()=>{
+      for(let i=0;i<50;i++){
+        const text=document.querySelector('#download-results')?.textContent||'';
+        if(text.includes('0.00 MiB/s · 0.00 Mbps')&&text.includes('预计剩余时间：估算中…')&&!text.includes('预计剩余 9 秒'))return;
+        await new Promise(r=>setTimeout(r,20));
+      }
+      throw new Error('Stalled ETA not cleared');
+    })()`);
+    win.webContents.send('downloads:changed',[]);
     win.show();
     await new Promise(resolve=>setTimeout(resolve,500));
     await writeFile(
@@ -175,6 +196,7 @@ app.whenReady().then(async () => {
     await writeFile(path.resolve(__dirname, '../smoke-result.json'), JSON.stringify({
       passed: true, timestamp: new Date().toISOString(),
       checks: ['isolated renderer', 'preload IPC', 'demo subtitle provenance and errors', 'second window', 'main-process SRT write with dialog stub', 'navigation', 'desktop and narrow document overflow', 'Canvas semester switch and stale resource clearing (fixture)', 'network failure UI (simulated)'],
+      downloadEtaFixtureTested: true,
       realAccountTested: false, nativeDialogTested: false,
     }, null, 2));
     console.log(

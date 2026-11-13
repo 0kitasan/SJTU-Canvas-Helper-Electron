@@ -46,13 +46,14 @@ test('HTML and incomplete range fail and clear partial files',async()=>fixture(a
   }
 }));
 test('cancellation clears file and starts next queued task',async()=>fixture(async dir=>{
+ let started!:()=>void;const ready=new Promise<void>(resolve=>{started=resolve;});
  let calls=0;const manager=new DownloadManager(async(_url,init)=>{
-   if(++calls===1)return new Response(new ReadableStream({start(controller){controller.enqueue(new Uint8Array([0,1,2]));init?.signal?.addEventListener('abort',()=>controller.error(new Error('aborted')));}}));
+   if(++calls===1)return new Response(new ReadableStream({start(controller){controller.enqueue(new Uint8Array([0,1,2]));init?.signal?.addEventListener('abort',()=>controller.error(new Error('aborted')));started();}}));
    return new Response('video');
- });
+ },undefined,1);
  const a=manager.enqueue({key:'a',title:'a',filePath:path.join(dir,'a.mp4'),resolve:source});
  const b=manager.enqueue({key:'b',title:'b',filePath:path.join(dir,'b.mp4'),resolve:source});
- await new Promise(r=>setTimeout(r,20));manager.cancel(a.id);
+ await ready;assert.equal(manager.list().find(t=>t.id===b.id)?.state,'queued');manager.cancel(a.id);
  assert.equal((await done(manager,a.id)).state,'cancelled');assert.equal((await done(manager,b.id)).state,'completed');assert.deepEqual(await readdir(dir),['b.mp4']);
 }));
 test('school URLs and API tracks validated without sending secrets to task snapshots',async()=>{

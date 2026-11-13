@@ -767,7 +767,10 @@ function App() {
                     {tasks.map(task => <tr key={task.id}><td>{task.title}<small>{task.state}{task.error ? ` · ${task.error}` : ""}</small>{task.stage && <small>{task.stage}</small>}{task.partialRetained && <small>已保留下载片段，重试时校验后续传。</small>}</td><td>
                       {task.total ? <progress value={task.received} max={task.total}/> : task.state === "running" ? <progress/> : null}
                       <small>{(task.received / 1048576).toFixed(1)} MB{task.total ? ` / ${(task.total / 1048576).toFixed(1)} MB` : ""}</small>
-                      {task.state === "running" && <small>{task.bytesPerSecond ? `${(task.bytesPerSecond/1048576).toFixed(2)} MiB/s · ${(task.bytesPerSecond*8/1000000).toFixed(2)} Mbps` : "正在连接或测速…"}</small>}
+                      {task.state === "running" && <>
+                        <small>{task.bytesPerSecond ? `平均 ${(task.bytesPerSecond/1048576).toFixed(2)} MiB/s · ${(task.bytesPerSecond*8/1000000).toFixed(2)} Mbps` : "0.00 MiB/s · 0.00 Mbps"}</small>
+                        <small>{task.etaSeconds !== undefined ? `预计剩余 ${task.etaSeconds < 60 ? `${task.etaSeconds} 秒` : task.etaSeconds < 3600 ? `${Math.ceil(task.etaSeconds/60)} 分钟` : `${Math.floor(task.etaSeconds/3600)} 小时 ${Math.ceil(task.etaSeconds%3600/60)} 分钟`}` : "预计剩余时间：估算中…"}</small>
+                      </>}
                       {["running","queued"].includes(task.state) && <button onClick={()=>void run(()=>window.canvas.cancelDownload(task.id))}>取消</button>}
                       {["failed","cancelled"].includes(task.state) && <button onClick={()=>void run(()=>window.canvas.retryDownload(task.id))}>重试</button>}
                       {task.state === "failed" && task.partialRetained && <button onClick={()=>void run(()=>window.canvas.cancelDownload(task.id))}>清除片段</button>}
@@ -806,7 +809,7 @@ function App() {
             <h2>{title}尚未迁移</h2>
             <p className="muted">
               已保留原版导航位置。此页面当前不提供学校业务操作，完整功能迁移进度见
-              FEATURE-PARITY.md。
+              docs/FEATURE-PARITY.md。
             </p>
             <button className="secondary" onClick={() => setPage("library")}>
               返回视频管理

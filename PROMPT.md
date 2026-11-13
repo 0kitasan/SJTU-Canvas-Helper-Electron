@@ -3,7 +3,7 @@
 继续维护本仓库 SJTU Canvas Helper Electron（Electron + TypeScript + React），不要从头重做。
 
 仓库：https://github.com/0kitasan/SJTU-Canvas-Helper-Electron
-当前公开分支：main。先运行 git status，确认并保留未提交改动，再阅读 AGENTS.md、STATUS.md、TEST-REPORT.md、FEATURE-PARITY.md、RUN-AND-TEST.md、PUBLICATION.md 和最近 Git 提交。
+当前公开分支：main。先运行 git status，确认并保留未提交改动，再阅读 AGENTS.md、STATUS.md、docs/TEST-REPORT.md、docs/FEATURE-PARITY.md、docs/RUN-AND-TEST.md、docs/PUBLICATION.md 和最近 Git 提交。
 
 ## 当前交接重点
 
@@ -33,3 +33,9 @@
 - 持续同步状态和功能清单。普通实现/修复/构建自主完成，用户明确说“只测试不提交”时遵守；本次断点修复已解除该限制。
 
 如果没有其他新需求，先确认本次Actions构建结果；之后优先验证自然断流下续传的长期稳定性，完整记录未完成项，不重复下载已经完成的大文件，也不要擅自扩展未确认的功能。
+
+
+最新本地维护（2026-11-10）：说明文档移入docs（索引docs/README.md），根目录保留维护入口和许可。下载新增最近10秒平均速率与ETA；65项测试、类型检查、构建和隔离Electron显示烟测通过。学校自然断流长期验证仍未完成，未为本次显示修改下载真实媒体。
+
+
+连接诊断最新证据：2026-11-10独立测试未完成的230937机位1，5分钟内两次自然静默30秒超时，两次206续传恢复，首次断点64KiB逐字节一致，收到248.40MiB后预算停止并清理。未完成整文件或多课程长期回归；网络停顿已复现但具体链路原因未定位。复测可用run.ps1 stability，已有218411/218110四机位已完整，应跳过。

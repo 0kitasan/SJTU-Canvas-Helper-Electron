@@ -59,6 +59,6 @@ jobs:
             release/SHA256SUMS.txt
             LICENSE
             THIRD-PARTY-NOTICES.md
-            DISTRIBUTION.md
+            docs/DISTRIBUTION.md
           if-no-files-found: error
           retention-days: 90

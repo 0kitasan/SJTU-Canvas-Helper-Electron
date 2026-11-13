@@ -6,6 +6,42 @@ import {tmpdir} from 'node:os';
 import path from 'node:path';
 import {DownloadManager} from '../core/downloads.js';
 const data=Buffer.alloc(65536,7);
+
+test('three consecutive drops preserve exact patterned bytes and re-resolve every attempt',async()=>{
+ const payload=Buffer.from(Array.from({length:65536},(_,i)=>(i*31+(i>>>8))%251));
+ let calls=0,resolves=0;
+ await fixture((req,res)=>{
+  const start=Number(req.headers.range?.match(/bytes=(\d+)-/)?.[1]||0);
+  assert.equal(start,calls*8192);calls++;
+  res.writeHead(start?206:200,{'Content-Length':payload.length-start,ETag:'"stable"',...(start?{'Content-Range':`bytes ${start}-${payload.length-1}/${payload.length}`}:{})});
+  if(calls<=3){res.write(payload.subarray(start,start+8192));setTimeout(()=>res.destroy(),30);}
+  else res.end(payload.subarray(start));
+ },async(m,file)=>{
+  const task=m.enqueue({key:'repeated',title:'repeated',filePath:file,resolve:async()=>{resolves++;return {url:(m as DownloadManager & {testUrl:string}).testUrl};}});
+  const result=await done(m,task.id);assert.equal(result.state,'completed');assert.equal(result.retryCount,3);
+  assert.equal(resolves,4);assert.deepEqual(await readFile(file),payload);
+ });
+});
+
+test('weak ETag falls back to Last-Modified for safe resume',async()=>{
+ let calls=0;const modified='Mon, 02 Nov 2026 00:00:00 GMT';
+ await fixture((req,res)=>{
+  const start=calls++?8192:0;
+  if(start){assert.equal(req.headers.range,'bytes=8192-');assert.equal(req.headers['if-range'],modified);}
+  res.writeHead(start?206:200,{'Content-Length':data.length-start,ETag:'W/"weak"','Last-Modified':modified,...(start?{'Content-Range':`bytes ${start}-${data.length-1}/${data.length}`}:{})});
+  if(!start){res.write(data.subarray(0,8192));setTimeout(()=>res.destroy(),30);}else res.end(data.subarray(start));
+ },async(m,file)=>{assert.equal((await done(m,add(m,file).id)).state,'completed');assert.deepEqual(await readFile(file),data);});
+});
+
+test('416 discards stale offset and retries from zero without publishing a fragment',async()=>{
+ let calls=0;
+ await fixture((req,res)=>{
+  calls++;
+  if(calls===2){assert.equal(req.headers.range,'bytes=8192-');res.writeHead(416);res.end();return;}
+  assert.equal(req.headers.range,undefined);res.writeHead(200,{'Content-Length':data.length,ETag:'"same"'});
+  if(calls===1){res.write(data.subarray(0,8192));setTimeout(()=>res.destroy(),30);}else res.end(data);
+ },async(m,file)=>{assert.equal((await done(m,add(m,file).id)).state,'completed');assert.deepEqual(await readFile(file),data);assert.equal(calls,3);});
+});
 test('speed ticker drops to zero during a silent stream without waiting for another chunk',async()=>{
  const dir=await mkdtemp(path.join(tmpdir(),'resume-speed-'));
  const manager=new DownloadManager(async(_url,init)=>new Response(new ReadableStream({start(controller){

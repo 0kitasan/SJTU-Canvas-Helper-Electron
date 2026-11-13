@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { open, link, unlink, stat, mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import type { DownloadTask } from '../shared/downloads.js';
+import { DownloadRate } from './download-rate.js';
 
 export function schoolVideoUrl(value: string): void {
   const url = new URL(value);
@@ -74,9 +75,15 @@ export class DownloadManager {
     const {task,input}=entry, root=new AbortController();entry.controller=root;
     const part=`${input.filePath}.${task.id}.part`;
     let file:Awaited<ReturnType<typeof open>>|undefined, retain=false;
-    let previous=task.received, previousTime=Date.now();
-    const ticker=setInterval(()=>{const now=Date.now();task.bytesPerSecond=Math.max(0,task.received-previous)*1000/(now-previousTime);previous=task.received;previousTime=now;this.emit();},1000);
-    const reset=async()=>{await file!.truncate(0);task.received=0;delete task.total;delete entry.validator;delete entry.total;previous=0;previousTime=Date.now();};
+    let rate=new DownloadRate(task.received,performance.now());
+    const clearRate=()=>{rate=new DownloadRate(task.received,performance.now());task.bytesPerSecond=0;delete task.etaSeconds;};
+    clearRate();
+    const ticker=setInterval(()=>{
+      if(task.stage==='正在下载'||task.stage==='正在续传')Object.assign(task,rate.update(task.received,task.total,performance.now()));
+      else clearRate();
+      this.emit();
+    },1000);
+    const reset=async()=>{await file!.truncate(0);task.received=0;delete task.total;delete entry.validator;delete entry.total;clearRate();};
     task.state='running';task.stage='正在连接';task.partialRetained=false;this.emit();
     try {
       await entry.cleanup;
@@ -119,7 +126,7 @@ export class DownloadManager {
             if(offset&&(validator!==entry.validator||total!==entry.total)){await discard();await reset();throw new Retryable('视频资源已变化，重新下载');}
           }else if(offset){await reset();}
           if(!response.body)throw new Error('视频响应没有数据流');
-          task.total=total;entry.total=total;entry.validator=validator;task.stage=task.received?'正在续传':'正在下载';this.emit();reader=response.body.getReader();
+          task.total=total;entry.total=total;entry.validator=validator;task.stage=task.received?'正在续传':'正在下载';clearRate();this.emit();reader=response.body.getReader();
           while(true){
             arm();let chunk:ReadableStreamReadResult<Uint8Array>;
             try{chunk=await wait(reader.read());}catch{throw new Retryable('视频数据流中断或超时');}
@@ -138,7 +145,7 @@ export class DownloadManager {
           if(!(error instanceof Retryable)&&!(controller.signal.reason instanceof Retryable))throw error;
           retain=Boolean(task.received&&entry.validator&&entry.total);
           if(attempt>=(this.options.maxRetries??3))throw error;
-          if(!retain)await reset();task.retryCount=attempt+1;task.stage=`连接中断，等待第${attempt+1}次重连`;task.bytesPerSecond=0;this.emit();
+          if(!retain)await reset();task.retryCount=attempt+1;task.stage=`连接中断，等待第${attempt+1}次重连`;clearRate();this.emit();
           clearTimeout(timer);controller.abort();await reader?.cancel().catch(()=>{});reader=undefined;
           await new Promise<void>((resolve,reject)=>{const cancel=()=>{clearTimeout(delay);reject(root.signal.reason);};const delay=setTimeout(()=>{root.signal.removeEventListener('abort',cancel);resolve();},Math.min((this.options.retryDelayMs??1000)*2**attempt,8000));root.signal.addEventListener('abort',cancel,{once:true});if(root.signal.aborted)cancel();});
         }finally{clearTimeout(timer);root.signal.removeEventListener('abort',abort);controller.abort();await reader?.cancel().catch(()=>{});}
@@ -151,7 +158,7 @@ export class DownloadManager {
       clearInterval(ticker);await file?.close().catch(()=>{});
       if(!retain||root.signal.aborted){await unlink(part).catch(()=>{});task.partialRetained=false;if(task.state!=='completed'){task.received=0;delete entry.validator;delete entry.total;}}
       if(task.state==='running')task.state=root.signal.aborted?'cancelled':'failed';
-      delete entry.controller;task.bytesPerSecond=0;this.emit();
+      delete entry.controller;clearRate();this.emit();
     }
   }
 }
